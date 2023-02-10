@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "C:/Users/lenovo/.conda/envs/GTA/python", // Path to your python interpreter
             "args": [
-                "${workspaceFolder}/python/gc.py"
+                "${workspaceFolder}/python/base/gc.py"
             ],
             "group": {
                 "kind": "build",

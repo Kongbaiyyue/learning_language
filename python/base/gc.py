@@ -47,4 +47,28 @@ def garbage_collect():
     print(gc.get_count())
 
 
-garbage_collect()
+"""
+    search object referrers
+"""
+def object_referrers():
+    import gc
+
+
+    def foo():
+        a = [2, 4, 6]
+        b = [1, 4, 7]
+
+        l = [a, b]
+        d = dict(a=a)
+        return l, d
+
+    l, d = foo()
+    r1 = gc.get_referrers(l[0])
+    r2 = gc.get_referrers(l[1])
+
+    print(r1)
+    print(r2)
+
+
+object_referrers()
+

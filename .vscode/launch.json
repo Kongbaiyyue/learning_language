@@ -4,7 +4,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/python/base/gc.py",
+            "program": "${workspaceFolder}/python/math/Problem1.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}/python"

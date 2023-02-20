@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "C:/Users/lenovo/.conda/envs/GTA/python", // Path to your python interpreter
             "args": [
-                "${workspaceFolder}/python/base/gc.py"
+                "${workspaceFolder}/python/torch/freeze_layer.py"
             ],
             "group": {
                 "kind": "build",

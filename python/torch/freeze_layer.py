@@ -28,9 +28,10 @@ model = net()
 loss_fn = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=1e-2)  # 传入的是所有的参数
 
-for name, param in model.named_parameters():
-    if "fc2" in name:
-        param.requires_grad = False
+# for name, param in model.named_parameters():
+#     if "fc2" in name:
+#         param.requires_grad = False
+#         print(param.grad)
 
 
 # 训练前的模型参数
@@ -48,13 +49,17 @@ for epoch in range(10):
     # print("model.fc2.weight grad", model.fc2.weight.grad_fn)
     loss.backward()
     optimizer.step()
+    for name, param in model.named_parameters():
+        if "fc2" in name:
+            print('++++',param.grad,'++++')
+        
     
 
 # 训练后的模型参数
 print("model.fc1.weight", model.fc1.weight)
 print("model.fc2.weight", model.fc2.weight)
 
-print("loss grad", loss.requires_grad)
+# print("loss grad", loss.requires_grad)
 
 
 # x = torch.tensor(2., requires_grad=True)
@@ -63,7 +68,8 @@ print("loss grad", loss.requires_grad)
 # b = torch.add(x, 2)
 # y = torch.mul(a, b)
 
-# a.requires_grad = False
+# y.requires_grad = False
+# # x.detach()
 
 # y.backward()
 

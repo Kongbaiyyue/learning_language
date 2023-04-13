@@ -1,0 +1,9 @@
+*.png
+*.jpg
+*.pyc
+*.log
+*.err
+*.xml
+*.json
+*.csv
+*.txt

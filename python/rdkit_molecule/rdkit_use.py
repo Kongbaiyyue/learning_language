@@ -190,22 +190,163 @@ def get_s2n():
 
 from rdkit import Chem
 
-# SMILES 字符串 a 和 b
-smiles_a = '[CH2:1]([C@H:2]1[CH2:3][CH2:4][C:5](=[O:6])[O:7]1)[N:8]1[CH2:9][CH2:10][N:11]([CH2:12][CH2:13][O:14][c:15]2[cH:16][c:17]3[n:18][cH:19][n:20][c:21]([NH:22][c:23]4[cH:24][cH:25][c:26]([F:27])[c:28]([Cl:29])[cH:30]4)[c:31]3[cH:32][c:33]2[O:34][CH:35]2[CH2:36][CH2:37][CH2:38][CH2:39]2)[CH2:40][CH2:41]1'
-# smiles_b = 'O=C1CC[C@H](CN2CCN(CCOc3cc4ncnc(Nc5ccc(F)c(Cl)c5)c4cc3OC3CCCC3)CC2)O1'
+def match_num_smi():
+    # SMILES 字符串 a 和 b
+    smiles_a = '[CH2:1]([C@H:2]1[CH2:3][CH2:4][C:5](=[O:6])[O:7]1)[N:8]1[CH2:9][CH2:10][N:11]([CH2:12][CH2:13][O:14][c:15]2[cH:16][c:17]3[n:18][cH:19][n:20][c:21]([NH:22][c:23]4[cH:24][cH:25][c:26]([F:27])[c:28]([Cl:29])[cH:30]4)[c:31]3[cH:32][c:33]2[O:34][CH:35]2[CH2:36][CH2:37][CH2:38][CH2:39]2)[CH2:40][CH2:41]1'
+    # smiles_b = 'O=C1CC[C@H](CN2CCN(CCOc3cc4ncnc(Nc5ccc(F)c(Cl)c5)c4cc3OC3CCCC3)CC2)O1'
 
-# 转换为 RDKit 的 Molecule 对象
-mol_a = Chem.MolFromSmiles(smiles_a)
-# mol_b = Chem.MolFromSmiles(smiles_b)
+    # 转换为 RDKit 的 Molecule 对象
+    mol_a = Chem.MolFromSmiles(smiles_a)
+    # mol_b = Chem.MolFromSmiles(smiles_b)
 
-# 获取 SMILES b 中的子图，即 c1ccccc1CCN 中的苯环和 N 原子
-sub_mol_b = Chem.MolFromSmarts('O=C1CC[C@H](CN2CCN(CCOc3cc4ncnc(Nc5ccc(F)c(Cl)c5)c4cc3OC3CCCC3)CC2)O1')
+    # 获取 SMILES b 中的子图，即 c1ccccc1CCN 中的苯环和 N 原子
+    sub_mol_b = Chem.MolFromSmarts('O=C1CC[C@H](CN2CCN(CCOc3cc4ncnc(Nc5ccc(F)c(Cl)c5)c4cc3OC3CCCC3)CC2)O1')
 
-# 在 mol_a 中查找与 sub_mol_b 中的原子相对应的原子
-matches = mol_a.GetSubstructMatches(sub_mol_b)
+    # 在 mol_a 中查找与 sub_mol_b 中的原子相对应的原子
+    matches = mol_a.GetSubstructMatches(sub_mol_b)
 
-# 输出匹配结果
-for match in matches:
-    for i, atom_idx in enumerate(match):
-        atom = mol_a.GetAtomWithIdx(atom_idx)
-        print(f'Atom {i}: {atom.GetSymbol()}, idx: {atom_idx}')
+    # 输出匹配结果
+    for match in matches:
+        for i, atom_idx in enumerate(match):
+            atom = mol_a.GetAtomWithIdx(atom_idx)
+            print(f'Atom {i}: {atom.GetSymbol()}, idx: {atom_idx}')
+
+
+
+
+
+def get_mol(smiles, kekulize=False):
+    """SMILES string to Mol.
+
+    Parameters
+    ----------
+    smiles: str,
+        SMILES string for molecule
+    kekulize: bool,
+        Whether to kekulize the molecule
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is not None and kekulize:
+        Chem.Kekulize(mol)
+    return mol
+
+def get_bond_info(mol):
+    """Get information on bonds in the molecule.
+
+    Parameters
+    ----------
+    mol: Chem.Mol
+        Molecule
+    """
+    if mol is None:
+        return {}
+
+    bond_info = {}
+    for bond in mol.GetBonds():
+        a_start = bond.GetBeginAtom().GetAtomMapNum()
+        a_end = bond.GetEndAtom().GetAtomMapNum()
+
+        key_pair = sorted([a_start, a_end])
+        bond_info[tuple(key_pair)] = [bond.GetBondTypeAsDouble(), bond.GetIdx()]
+
+    return bond_info
+
+def get_reaction_core(r, p, kekulize=False, use_h_labels=False):
+    """Get the reaction core and edits for given reaction
+
+    Parameters
+    ----------
+    r: str,
+        SMILES string representing the reactants
+    p: str,
+        SMILES string representing the product
+    kekulize: bool,
+        Whether to kekulize molecules to fetch minimal set of edits
+    use_h_labels: bool,
+        Whether to use change in hydrogen counts in edits
+    """
+    reac_mol = get_mol(r)
+    prod_mol = get_mol(p)
+
+    if reac_mol is None or prod_mol is None:
+        return set(), []
+
+    prod_bonds = get_bond_info(prod_mol)
+    p_amap_idx = {atom.GetAtomMapNum(): atom.GetIdx() for atom in prod_mol.GetAtoms()}
+
+    max_amap = max([atom.GetAtomMapNum() for atom in reac_mol.GetAtoms()])
+    for atom in reac_mol.GetAtoms():
+        if atom.GetAtomMapNum() == 0:
+            atom.SetAtomMapNum(max_amap + 1)
+            max_amap += 1
+
+    reac_bonds = get_bond_info(reac_mol)
+    reac_amap = {atom.GetAtomMapNum(): atom.GetIdx() for atom in reac_mol.GetAtoms()}
+
+    rxn_core = set()
+    core_edits = []
+
+    for bond in prod_bonds:
+        if bond in reac_bonds and prod_bonds[bond][0] != reac_bonds[bond][0]:
+            a_start, a_end = bond
+            prod_bo, reac_bo = prod_bonds[bond][0], reac_bonds[bond][0]
+
+            a_start, a_end = sorted([a_start, a_end])
+            edit = f"{a_start}:{a_end}:{prod_bo}:{reac_bo}"
+            core_edits.append(edit)
+            rxn_core.update([a_start, a_end])
+
+        if bond not in reac_bonds:
+            a_start, a_end = bond
+            reac_bo = 0.0
+            prod_bo = prod_bonds[bond][0]
+
+            start, end = sorted([a_start, a_end])
+            edit = f"{a_start}:{a_end}:{prod_bo}:{reac_bo}"
+            core_edits.append(edit)
+            rxn_core.update([a_start, a_end])
+
+    for bond in reac_bonds:
+        if bond not in prod_bonds:
+            amap1, amap2 = bond
+
+            if (amap1 in p_amap_idx) and (amap2 in p_amap_idx):
+                a_start, a_end = sorted([amap1, amap2])
+                reac_bo = reac_bonds[bond][0]
+                edit = f"{a_start}:{a_end}:{0.0}:{reac_bo}"
+                core_edits.append(edit)
+                rxn_core.update([a_start, a_end])
+
+    if use_h_labels:
+        if len(rxn_core) == 0:
+            for atom in prod_mol.GetAtoms():
+                amap_num = atom.GetAtomMapNum()
+
+                numHs_prod = atom.GetTotalNumHs()
+                numHs_reac = reac_mol.GetAtomWithIdx(reac_amap[amap_num]).GetTotalNumHs()
+
+                if numHs_prod != numHs_reac:
+                    edit = f"{amap_num}:{0}:{1.0}:{0.0}"
+                    core_edits.append(edit)
+                    rxn_core.add(amap_num)
+
+    return rxn_core, core_edits
+
+reaction_smi = "[NH2:3][c:4]1[cH:5][cH:6][cH:7][c:8]2[cH:9][n:10][cH:11][cH:12][c:13]12.[O:1]=[C:2]([c:14]1[cH:15][c:16]([N+:17](=[O:18])[O-:19])[c:20]([S:21][c:22]2[c:23]([Cl:24])[cH:25][n:26][cH:27][c:28]2[Cl:29])[s:30]1)[OH:31]>>[O:1]=[C:2]([NH:3][c:4]1[cH:5][cH:6][cH:7][c:8]2[cH:9][n:10][cH:11][cH:12][c:13]12)[c:14]1[cH:15][c:16]([N+:17](=[O:18])[O-:19])[c:20]([S:21][c:22]2[c:23]([Cl:24])[cH:25][n:26][cH:27][c:28]2[Cl:29])[s:30]1"
+r, p = reaction_smi.split(">>")
+rxn_core, core_edits = get_reaction_core(r=r, p=p)
+
+print(rxn_core)
+print(core_edits)
+
+reactants = mols_from_smiles_list(replace_deuterated(r).split('.'))
+products = mols_from_smiles_list(replace_deuterated(p).split('.'))
+changed_atoms, changed_atom_tags, err = get_changed_atoms(reactants, products)
+print(changed_atom_tags)
+# mol = Chem.MolFromSmiles(r)
+# img = Draw.MolToImage(mol)
+# img.show()
+
+# mol = Chem.MolFromSmiles(p)
+# img = Draw.MolToImage(mol)
+# img.show()

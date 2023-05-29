@@ -53,3 +53,21 @@ def tensor_operate():
 
     print(y1[1, :, :])
     print(y1[y, :])
+
+import torch
+
+def tensor_rand():
+    # 从标准正态分布中生成一个形状为(1, 5)的张量
+    tensor = torch.randn(2, 5, 4)
+    tensor2 = torch.randn(2, 5, 4)
+
+    # 生成一个与 tensor 形状相同的概率张量，其中 0.5 的概率为 True，0.5 的概率为 False
+    prob = torch.rand(5) < 0.5
+
+    print(tensor)
+    # 将 tensor 中对应的元素根据 prob 转换成 True 或 False
+    # tensor = torch.where(prob, tensor, tensor2)
+    tensor = tensor[:, prob==1, :]
+
+    print(tensor)
+tensor_rand()

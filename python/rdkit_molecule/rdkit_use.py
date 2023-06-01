@@ -728,7 +728,7 @@ def deal_pretrain_cross_graph_text():
     df.to_pickle("data/uspto_pretrain_50k.pickle")
 
 
-deal_pretrain_cross_graph_text()
+# deal_pretrain_cross_graph_text()
 # import pandas as pd
 # df = pd.read_pickle("data/uspto_full_no50_1m.pickle")
 # # for i in range(df.shape[0]):

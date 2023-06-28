@@ -4,6 +4,7 @@ from sre_constants import CH_LOCALE
 from rdkit import Chem
 from rdkit.Chem import Draw
 
+import torch
 import re
 
 # from rdchiral.template_extractor import extract_from_reaction, get_changed_atoms, mols_from_smiles_list, \
@@ -836,25 +837,77 @@ import pandas as pd
 # df.to_pickle("data/retro_uspto_50_template_md.pickle")
 # print(df)
 
-df = pd.read_csv("data/retro_uspto_50_template_md.csv")
+# df = pd.read_csv("data/retro_uspto_50_template_md.csv")
 
-total = 0
-acc_token = 0
-acc_str = 0
-for i in range(df.shape[0]):
-    mol_str = df["products"][i]
-    target_str = df["products_mol"][i]
+# total = 0
+# acc_token = 0
+# acc_str = 0
+# for i in range(df.shape[0]):
+#     mol_str = df["products"][i]
+#     target_str = df["products_mol"][i]
     
-    len_mol = len(mol_str) if len(mol_str) < len(target_str) else len(target_str)
-    for j in range(len_mol):
+#     len_mol = len(mol_str) if len(mol_str) < len(target_str) else len(target_str)
+#     for j in range(len_mol):
         
-        total += 1
+#         total += 1
         
-        if mol_str[j] == target_str[j]:
-            acc_token += 1
+#         if mol_str[j] == target_str[j]:
+#             acc_token += 1
     
-    if mol_str == target_str:
-        acc_str += 1
+#     if mol_str == target_str:
+#         acc_str += 1
 
-print("token_acc", acc_token / total)
-print("str_acc", acc_str / df.shape[0])
+# print("token_acc", acc_token / total)
+# print("str_acc", acc_str / df.shape[0])
+
+
+def smi_tokens(smi):
+    """
+    Tokenize a SMILES molecule or reaction
+    """
+    import re
+
+    # pattern = "(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])"
+    # regex = re.compile(pattern)
+    # tokens = [token for token in regex.findall(smi)]
+    # assert smi == ''.join(tokens)
+    # return tokens
+    pattern = "(\[[^\]]+]|Bi|Br?|Ge|Te|Mo|K|Ti|Zr|Y|Na|125I|Al|Ce|Cr|Cl?|Ni?|O|S|Pd?|Fe?|I|b|c|Mn|n|o|s|<unk>|>>|Li|p|\(|\)|\.|=|#|-|\+|\\\\|\/|:|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])"
+    regex = re.compile(pattern)
+    tokens = [token for token in regex.findall(smi)]
+    if smi != ''.join(tokens):
+        print('ERROR:', smi, ''.join(tokens))
+    assert smi == ''.join(tokens)
+    return tokens
+
+
+def mol_map_diff_smiles(smi1, smi2):
+    from rdkit.Chem.rdFMCS import FindMCS
+
+    src_chars = smi_tokens(smi1)
+    tgt_chars = smi_tokens(smi2)
+
+    src_mol = Chem.MolFromSmiles(smi1)
+    tgt_mol = Chem.MolFromSmiles(smi2)
+
+    atom_map = torch.zeros(src_mol.GetNumAtoms(), tgt_mol.GetNumAtoms())
+
+    tgt_mol = Chem.MolFromSmiles(smi2)
+    mols = [src_mol, tgt_mol]
+    result = FindMCS(mols, timeout=10)
+    result_mol = Chem.MolFromSmarts(result.smartsString)
+    src_mat = src_mol.GetSubstructMatches(result_mol)
+    print(src_mat[0])
+    tgt_mat = tgt_mol.GetSubstructMatches(result_mol)
+    if len(src_mat) > 0 and len(tgt_mat) > 0:
+        for i, j in zip(src_mat[0], tgt_mat[0]):
+            atom_map[i, j] = 1
+
+    return atom_map
+
+torch.set_printoptions(profile="full")
+
+smi1 = "C([C@H]1CCC(=O)O1)N1CCN(CCOc2cc3ncnc(Nc4ccc(F)c(Cl)c4)c3cc2OC2CCCC2)CC1"
+smi2 = "O=C1CC[C@H](CN2CCN(CCOc3cc4ncnc(Nc5ccc(F)c(Cl)c5)c4cc3OC3CCCC3)CC2)O1"
+
+atom_map = mol_map_diff_smiles(smi1, smi2)

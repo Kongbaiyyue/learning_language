@@ -1,1 +1,5 @@
 ordinary
+parallel
+mimic
+auxiliary
+aforemention

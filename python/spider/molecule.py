@@ -120,16 +120,89 @@ def get_graph_matrix(smi):
 # df_new = pd.DataFrame(df_data)
 # df_new.to_pickle("../rdkit_molecule/data/uspto_50_graph.pickle")
 
-with open("data/mol_id_6_28.txt", "r") as f:
-    lines = f.readlines()
+# with open("data/mol_id_6_28.txt", "r") as f:
+#     lines = f.readlines()
     
-    ids = set()
-    for line in lines:
-        ids.add(line.strip())
+#     ids = set()
+#     for line in lines:
+#         ids.add(line.strip())
         
-    print(len(ids))
+#     print(len(ids))
     
     
-with open("data/mol_ids.txt", "w") as f:
-    for i in ids:
-        f.write(i + "\n")
+# with open("data/mol_ids.txt", "w") as f:
+#     for i in ids:
+#         f.write(i + "\n")
+
+
+def get_molecule_info(id, authorization_token):
+    url = "http://www.dcaiku.com/v1/perseus/mol_search"
+    url_get_token = "http://www.dcaiku.com/v1/public/token_refresh"
+    
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "Authorization": authorization_token,
+        "Content-Length": "36",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Host": "www.dcaiku.com",
+        "Origin": "http://www.dcaiku.com",
+        "Proxy-Connection": "keep-alive",
+        "Referer": "http://www.dcaiku.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
+
+    data_json = [
+        {"label": id,"type":"id"}
+    ]
+    
+    refresh_json = {
+        "refreshToken": authorization_token
+    }
+    k_count = 0
+    
+    while True:
+        try:
+            r = requests.post(url, data=json.dumps(data_json), headers=headers)
+            data = json.loads(r.text)
+            
+            
+            r = requests.post(url_get_token, data=json.dumps(refresh_json), headers=headers)
+            token_json = json.loads(r.text)
+            if "error" in token_json.keys():
+                print(r.text)
+                break
+            authorization_token = token_json["message"]
+            
+            return data, authorization_token
+        except:
+            print(k_count)
+            continue
+    
+    return None, None
+        
+
+def mole_info():
+    authorization_token = ""
+    
+    data_dict = {
+        "id": [],
+        "data": []
+    }
+    
+    with open("data/mol_ids.txt", "r") as f:
+        lines = f.readlines()
+        
+        ids = []
+        for line in lines:
+            id = line.strip()
+            data, authorization_token = get_molecule_info(id, authorization_token)
+            data_dict["id"].append(id)
+            data_dict["data"].append(data)
+    
+    df = pd.DataFrame(data_dict)
+    df.to_pickle("data/mol_info.pickle")
+            
+            
+    

@@ -70,4 +70,7 @@ def tensor_rand():
     tensor = tensor[:, prob==1, :]
 
     print(tensor)
-tensor_rand()
+# tensor_rand()
+# a = torch.tril(torch.ones(size=(3,3)),diagonal=0)
+mask = (torch.triu(torch.ones((3, 3))) == 1).transpose(0, 1)
+print(mask)

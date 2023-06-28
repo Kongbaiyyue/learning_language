@@ -1,6 +1,8 @@
+from calendar import c
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions
+# from pysmilesutils.augment import MolAugmenter
 
 # 随机生成smiles
 def random_smiles(smi_):
@@ -16,8 +18,18 @@ def random_smiles(smi_):
     return smi__
 
 # 示例用法
-# smi = "C O c 1 c c c ( C N 2 C C c 3 n c ( N C ( = O ) N [C@H] ( C ) c 4 c c c c c 4 ) c c 4 c 3 c 2 n n 4 C ( c 2 c c c c c 2 ) ( c 2 c c c c c 2 ) c 2 c c c c c 2 ) c c 1"
-# print(random_smiles(smi))
+# smi = "C(CO)OC1CCN(C(OC(C)(C)C)=O)CC1"
+# smi2 = "C(O)COC1CCN(C(=O)OC(C)(C)C)CC1"
+# smi3 = Chem.MolToSmiles(Chem.MolFromSmiles(smi2), canonical=True)
+# smi4 = Chem.MolToSmiles(Chem.MolFromSmiles(smi), canonical=True)
+# aug = MolAugmenter()
+# smi_list = aug([smi3])
+# print(len(smi_list))
+# mol_str = Chem.MolToSmiles(smi_list[0], canonical=False)
+# print(mol_str)
+# # print(smi3)
+# # print(smi4)
+# # print(random_smiles(smi))
 
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions
@@ -48,16 +60,6 @@ def generate_all_smiles(mol):
     
     return smiles_list
 
-# # 示例用法
-# smiles = "C O C ( = O ) C C C ( = O ) c 1 c c c ( O C 2 C C C C O 2 ) c c 1 O"
-# smiles = smiles.replace(" ", "").replace("\n", "")
-# mol = Chem.MolFromSmiles(smiles)
-
-# if mol is not None:
-#     all_smiles = generate_all_smiles(mol)
-#     print(all_smiles)
-# else:
-#     print("无效的SMILES表示")
 
 from rdkit import Chem
 from random import choice
@@ -70,7 +72,10 @@ def delete_bond(mol):
     smi = Chem.MolToSmiles(mol)
     print(smi)
 
-smiles = "C O C ( = O ) C C C ( = O ) c 1 c c c ( O C 2 C C C C O 2 ) c c 1 O"
-smiles = smiles.replace(" ", "").replace("\n", "")
-mol = Chem.MolFromSmiles(smiles)
-delete_bond(mol)
+# smiles = "C O C ( = O ) C C C ( = O ) c 1 c c c ( O C 2 C C C C O 2 ) c c 1 O"
+# smiles = smiles.replace(" ", "").replace("\n", "")
+# mol = Chem.MolFromSmiles(smiles)
+# delete_bond(mol)
+import pandas as pd
+# df = pd.read_pickle("data/retro_uspto_50_template.pickle")
+df = pd.read_csv("data/retro_uspto_50_template.csv")

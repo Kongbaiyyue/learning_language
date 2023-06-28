@@ -8,6 +8,16 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}/python"
+        },
+        {
+            "name": "Python: a File",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/python/torch/tensor.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}/python"
         }
+
     ]
 }

@@ -6,15 +6,16 @@ from rdkit import Chem
 import pandas as pd
 
 def get_smi_json():
-    # url = "http://www.dcaiku.com/v1/perseus/mol_search"
+    url = "http://www.dcaiku.com/v1/perseus/mol_search"
     # url = "http://www.dcaiku.com/v1/account"
-    url = "http://www.dcaiku.com/v1/public/token_refresh"
+    url_get_token = "http://www.dcaiku.com/v1/public/token_refresh"
 
+    authorization_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsImNyZWF0ZWRBdCI6IjE2ODc5MjkyNTMxODgiLCJleHBpcmVkQXQiOiIxNjg3OTM2NDUzMTg4Iiwicm9sZSI6IlJPTEVfVVNFUiIsImp0aSI6InBlcnNldXMiLCJlbWFpbCI6Ijk3MjMxMzAwNkBxcS5jb20ifQ.U1umFXzhd1abS8458TZ3aAVQY0MUFCxRGRBphykzAjI"
     headers = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate",
         "Accept-Language": "zh-CN,zh;q=0.9",
-        "Authorization":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsImNyZWF0ZWRBdCI6IjE2ODc5MTQ3NjA0NDEiLCJleHBpcmVkQXQiOiIxNjg3OTIxOTYwNDQxIiwicm9sZSI6IlJPTEVfVVNFUiIsImp0aSI6InBlcnNldXMiLCJlbWFpbCI6Ijk3MjMxMzAwNkBxcS5jb20ifQ.bbCH_izn1j_iDjlNzFzuIcZ-xkMdtR3d3oZ80FMHd2U",
+        "Authorization": authorization_token,
         "Content-Length": "36",
         "Content-Type": "application/json;charset=UTF-8",
         "Host": "www.dcaiku.com",
@@ -24,33 +25,42 @@ def get_smi_json():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
 
-    # data_json = [
-    #     {"label":"c","type":"title"}
-    # ]
+    data_json = [
+        {"label":"c","type":"title"}
+    ]
     
-    data_json = {
-        "refreshToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsImNyZWF0ZWRBdCI6IjE2ODc5MTQ3NjA0NDEiLCJleHBpcmVkQXQiOiIxNjg3OTIxOTYwNDQxIiwicm9sZSI6IlJPTEVfVVNFUiIsImp0aSI6InBlcnNldXMiLCJlbWFpbCI6Ijk3MjMxMzAwNkBxcS5jb20ifQ.bbCH_izn1j_iDjlNzFzuIcZ-xkMdtR3d3oZ80FMHd2U"
+    refresh_json = {
+        "refreshToken": authorization_token
     }
-    
-    with open("data/mol_id.txt", "w") as f:
+    k_count = 0
+    with open("data/mol_id_6_28.txt", "w") as f:
         while True:
             try:
                 r = requests.post(url, data=json.dumps(data_json), headers=headers)
-                # r = requests.post(url, headers=headers)
                 data = json.loads(r.text)
                 
-                if "error" in data.keys():
-                    r = requests.post(url, data=json.dumps(data_json), headers=headers)
-                    print(r.text)
                 for j in range(len(data["data"]["moleculeItemVos"])):
                     f.write(data["data"]["moleculeItemVos"][j]["id"] + "\n")
                 
-                data_json["label"] = data["data"]["next"]
-                data_json["type"] = "next"
+                data_json[0]["label"] = data["data"]["next"]
+                data_json[0]["type"] = "next"
+                
+                r = requests.post(url_get_token, data=json.dumps(refresh_json), headers=headers)
+                token_json = json.loads(r.text)
+                if "error" in token_json.keys():
+                    print(r.text)
+                    break
+                authorization_token = token_json["message"]
+                headers["Authorization"] = authorization_token
+                refresh_json["refreshToken"] = authorization_token
+                
+                k_count += 1
+                
             except:
+                print(k_count)
                 continue
     
-get_smi_json()
+# get_smi_json()
 
 def get_graph_matrix(smi):
     url = "http://cimg.dcaiku.com/"
@@ -109,3 +119,17 @@ def get_graph_matrix(smi):
     
 # df_new = pd.DataFrame(df_data)
 # df_new.to_pickle("../rdkit_molecule/data/uspto_50_graph.pickle")
+
+with open("data/mol_id_6_28.txt", "r") as f:
+    lines = f.readlines()
+    
+    ids = set()
+    for line in lines:
+        ids.add(line.strip())
+        
+    print(len(ids))
+    
+    
+with open("data/mol_ids.txt", "w") as f:
+    for i in ids:
+        f.write(i + "\n")

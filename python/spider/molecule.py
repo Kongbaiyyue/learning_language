@@ -205,4 +205,29 @@ def mole_info():
     df.to_pickle("data/mol_info.pickle")
             
             
+url = "http://www.dcaiku.com/v1/perseus/mol_search"
+
+headers = {
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Encoding": "gzip, deflate",
+    "Accept-Language": "zh-CN,zh;q=0.9",
+    # "Authorization": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY2Nlc3NUb2tlbiIsImNyZWF0ZWRBdCI6IjE2ODgwMjYxMzk4MDkiLCJleHBpcmVkQXQiOiIxNjg4MDMzMzM5ODA5Iiwicm9sZSI6IlJPTEVfVVNFUiIsImp0aSI6InBlcnNldXMiLCJlbWFpbCI6Imdvd2VtZXIzNDJAZWltYXRyby5jb20ifQ.XaO0qnTUO6gjao7xwYXPc9-G7l2mnnIpzQULJlcJRtc",
+    "Content-Length": "37",
+    "Content-Type": "application/json;charset=UTF-8",
+    "Host": "www.dcaiku.com",
+    "Origin": "http://www.dcaiku.com",
+    "Proxy-Connection": "keep-alive",
+    "Referer": "http://www.dcaiku.com/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+}
+import time
+data_json = [{"type": "id", "label": "CID69703207"}]
+
+# for i in range(100):
+r = requests.post(url, data=json.dumps(data_json), headers=headers)
+print(r.text)
+# data = json.loads(r.text)
+# print(data)
+
+time.sleep(1)
     

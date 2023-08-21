@@ -1,3 +1,4 @@
+from math import log
 import torch
 
 
@@ -70,7 +71,21 @@ def tensor_rand():
     tensor = tensor[:, prob==1, :]
 
     print(tensor)
+    
 # tensor_rand()
 # a = torch.tril(torch.ones(size=(3,3)),diagonal=0)
-mask = (torch.triu(torch.ones((3, 3))) == 1).transpose(0, 1)
-print(mask)
+def mask_triu():
+    mask = (torch.triu(torch.ones((3, 3))) == 1).transpose(0, 1)
+    print(mask)
+
+def logsumexp():
+    a = torch.randn(3, 3)
+    b = torch.logsumexp(a, 1)
+    c = torch.dist(torch.logsumexp(a, 1), torch.log(torch.sum(torch.exp(a), 1)))
+    d = torch.log(torch.sum(torch.exp(a), 1))
+    
+    print(b)
+    print(c)
+    
+    
+logsumexp()
